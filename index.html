@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualizador de Precios</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de la fuente Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilo base con la fuente Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Pequeña animación para el resultado */
+        @keyframes highlight {
+            from { transform: scale(1); background-color: #dbeafe; }
+            to { transform: scale(1.05); background-color: #bfdbfe; }
+        }
+        .highlight-result {
+            animation: highlight 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto space-y-8">
+        <header class="text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-blue-700">Gestor y Actualizador de Precios</h1>
+            <p class="text-lg text-gray-600 mt-2">Define tus aumentos por categoría y actualiza tus precios al instante.</p>
+        </header>
+
+        <!-- Contenedor principal de la aplicación -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Sección 1: Configuración de Aumentos (%) -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-4 text-gray-700">1. Configurar Aumentos (%)</h2>
+                    <form id="markupForm" class="space-y-4">
+                        <div>
+                            <label for="markupViveres" class="block text-sm font-medium text-gray-700">Víveres</label>
+                            <input type="number" id="markupViveres" min="0" placeholder="Ej: 20" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="markupHigiene" class="block text-sm font-medium text-gray-700">Higiene</label>
+                            <input type="number" id="markupHigiene" min="0" placeholder="Ej: 30" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="markupDulceria" class="block text-sm font-medium text-gray-700">Dulcería</label>
+                            <input type="number" id="markupDulceria" min="0" placeholder="Ej: 50" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="markupPapeleria" class="block text-sm font-medium text-gray-700">Papelería</label>
+                            <input type="number" id="markupPapeleria" min="0" placeholder="Ej: 40" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="markupLimpieza" class="block text-sm font-medium text-gray-700">Limpieza</label>
+                            <input type="number" id="markupLimpieza" min="0" placeholder="Ej: 25" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <button type="submit" id="saveMarkupsBtn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150">
+                            Guardar Aumentos
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Sección 2: Actualizar Costo (Función Principal) -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-4 text-gray-700">2. Actualizar Costo</h2>
+                    <form id="updatePriceForm" class="space-y-4">
+                        <div>
+                            <label for="updateProductInput" class="block text-sm font-medium text-gray-700">Buscar Producto por Nombre</label>
+                            <input type="text" id="updateProductInput" list="productListSuggestions" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white" placeholder="Escribe para buscar...">
+                            <datalist id="productListSuggestions">
+                                <!-- Opciones se cargarán aquí -->
+                            </datalist>
+                        </div>
+                        <div>
+                            <label for="updateCostInput" class="block text-sm font-medium text-gray-700">Nuevo Costo Unitario</label>
+                            <input type="number" id="updateCostInput" min="0" step="0.01" placeholder="Ej: 1.25" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150">
+                            Calcular y Actualizar
+                        </button>
+                    </form>
+                    <div id="newPriceResult" class="mt-5 text-center p-4 rounded-md">
+                        <!-- El resultado del cálculo aparecerá aquí -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Columna de Lista de Productos y Añadir -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Sección 3: Añadir Nuevo Producto -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-4 text-gray-700">Añadir Nuevo Producto</h2>
+                    <form id="saveProductForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div class="md:col-span-2">
+                            <label for="productName" class="block text-sm font-medium text-gray-700">Nombre</label>
+                            <input type="text" id="productName" placeholder="Ej: Arroz 1kg" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="productCategory" class="block text-sm font-medium text-gray-700">Categoría</label>
+                            <select id="productCategory" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                <option value="viveres">Víveres</option>
+                                <option value="higiene">Higiene</option>
+                                <option value="dulceria">Dulcería</option>
+                                <option value="papeleria">Papelería</option>
+                                <option value="limpieza">Limpieza</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="productCost" class="block text-sm font-medium text-gray-700">Costo Unitario</label>
+                            <input type="number" id="productCost" min="0" step="0.01" placeholder="Ej: 1.50" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <button type="submit" class="md:col-span-4 w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 mt-4 md:mt-0">
+                            Guardar Producto
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Sección 4: Lista de Productos -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-4 text-gray-700">Inventario de Productos</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Costo</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Aumento</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Venta</th>
+                                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productListTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Los productos se cargarán aquí dinámicamente -->
+                                <tr>
+                                    <td colspan="6" class="p-4 text-center text-gray-500">Cargando datos...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pie de página con ID de usuario para colaboración (si es necesario) -->
+        <footer class="text-center mt-8">
+            <p class="text-sm text-gray-500">Conectado como: <span id="userIdDisplay" class="font-medium">...</span></p>
+        </footer>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Importar funciones de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, onSnapshot, updateDoc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- VARIABLES GLOBALES ---
+        let db, auth, userId, appId;
+        let currentMarkups = {}; // Almacena los porcentajes de aumento
+        let productsMap = new Map(); // Almacena los productos para acceso rápido
+        
+        // --- CONFIGURACIÓN DE FIREBASE ---
+        // Cargar configuración de Firebase (inyectada por el entorno)
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        appId = typeof __app_id !== 'undefined' ? __app_id : 'default-price-updater';
+        
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        
+        // Activar logs de Firestore para depuración
+        setLogLevel('Debug');
+
+        // --- DOM ELEMENTS ---
+        const markupForm = document.getElementById('markupForm');
+        const saveMarkupsBtn = document.getElementById('saveMarkupsBtn');
+        const markupInputs = {
+            viveres: document.getElementById('markupViveres'),
+            higiene: document.getElementById('markupHigiene'),
+            dulceria: document.getElementById('markupDulceria'),
+            papeleria: document.getElementById('markupPapeleria'),
+            limpieza: document.getElementById('markupLimpieza')
+        };
+        
+        const saveProductForm = document.getElementById('saveProductForm');
+        const productNameInput = document.getElementById('productName');
+        const productCategorySelect = document.getElementById('productCategory');
+        const productCostInput = document.getElementById('productCost');
+        
+        const productListTableBody = document.getElementById('productListTableBody');
+        
+        const updatePriceForm = document.getElementById('updatePriceForm');
+        const updateProductInput = document.getElementById('updateProductInput'); // Reemplazado updateProductSelect
+        const productListSuggestions = document.getElementById('productListSuggestions'); // Añadido
+        const updateCostInput = document.getElementById('updateCostInput');
+        const newPriceResult = document.getElementById('newPriceResult');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+
+        // --- AUTENTICACIÓN ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                userIdDisplay.textContent = userId;
+                console.log("Usuario autenticado:", userId);
+                
+                // Cargar datos una vez que el usuario está autenticado
+                loadMarkups();
+                loadProducts();
+                
+                // Habilitar formularios
+                enableForms(true);
+            } else {
+                console.log("Usuario no autenticado, iniciando sesión...");
+                userIdDisplay.textContent = "Conectando...";
+                enableForms(false);
+                try {
+                    if (typeof __initial_auth_token !== 'undefined') {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Error al iniciar sesión:", error);
+                    userIdDisplay.textContent = "Error de conexión";
+                }
+            }
+        });
+
+        // --- FUNCIONES PRINCIPALES ---
+
+        /**
+         * Carga los porcentajes de aumento desde Firestore y los muestra en el formulario.
+         */
+        function loadMarkups() {
+            if (!userId) return;
+            const markupDocRef = doc(db, "artifacts", appId, "users", userId, "config", "markups");
+
+            onSnapshot(markupDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    currentMarkups = docSnap.data();
+                    console.log("Aumentos cargados:", currentMarkups);
+                    // Llenar los inputs del formulario
+                    markupInputs.viveres.value = currentMarkups.viveres || '';
+                    markupInputs.higiene.value = currentMarkups.higiene || '';
+                    markupInputs.dulceria.value = currentMarkups.dulceria || '';
+                    markupInputs.papeleria.value = currentMarkups.papeleria || '';
+                    markupInputs.limpieza.value = currentMarkups.limpieza || '';
+                } else {
+                    console.log("No existen configuraciones de aumento. Creando documento...");
+                    // Si no existe, se creará al guardar.
+                    currentMarkups = {};
+                }
+                // Volver a renderizar la tabla de productos por si los aumentos cambiaron
+                renderProductTable();
+            });
+        }
+
+        /**
+         * Guarda los porcentajes de aumento en Firestore.
+         */
+        async function saveMarkups(e) {
+            e.preventDefault();
+            if (!userId) return;
+
+            const newMarkups = {
+                viveres: parseFloat(markupInputs.viveres.value) || 0,
+                higiene: parseFloat(markupInputs.higiene.value) || 0,
+                dulceria: parseFloat(markupInputs.dulceria.value) || 0,
+                papeleria: parseFloat(markupInputs.papeleria.value) || 0,
+                limpieza: parseFloat(markupInputs.limpieza.value) || 0
+            };
+
+            const markupDocRef = doc(db, "artifacts", appId, "users", userId, "config", "markups");
+            try {
+                await setDoc(markupDocRef, newMarkups);
+                console.log("Aumentos guardados:", newMarkups);
+                showToast("Porcentajes de aumento guardados.");
+            } catch (error) {
+                console.error("Error al guardar aumentos:", error);
+                showToast("Error al guardar aumentos.", true);
+            }
+        }
+
+        /**
+         * Carga la lista de productos desde Firestore y actualiza el mapa de productos.
+         */
+        function loadProducts() {
+            if (!userId) return;
+            const productsCollRef = collection(db, "artifacts", appId, "users", userId, "products");
+            
+            onSnapshot(productsCollRef, (querySnapshot) => {
+                productsMap.clear(); // Limpiar el mapa
+                querySnapshot.forEach((doc) => {
+                    productsMap.set(doc.id, { id: doc.id, ...doc.data() });
+                });
+                console.log("Productos cargados en el mapa:", productsMap.size);
+                // Renderizar la tabla y el dropdown
+                renderProductTable();
+                renderProductDatalist(); // Cambiado de renderProductDropdown
+            });
+        }
+
+        /**
+         * Renderiza la tabla de productos usando los datos de `productsMap` y `currentMarkups`.
+         */
+        function renderProductTable() {
+            productListTableBody.innerHTML = ''; // Limpiar tabla
+
+            if (productsMap.size === 0) {
+                productListTableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">No hay productos añadidos.</td></tr>`;
+                return;
+            }
+
+            // Ordenar productos por nombre
+            const sortedProducts = [...productsMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+
+            sortedProducts.forEach(product => {
+                const markupPercent = currentMarkups[product.category] || 0;
+                const sellingPrice = calculateSellingPrice(product.cost, markupPercent);
+                
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${product.name}</div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCategoryClass(product.category)}">
+                            ${capitalize(product.category)}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${formatCurrency(product.cost)}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600 font-medium">+${markupPercent}%</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-bold">${formatCurrency(sellingPrice)}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="delete-btn text-red-500 hover:text-red-700" data-id="${product.id}">
+                            Eliminar
+                        </button>
+                    </td>
+                `;
+                productListTableBody.appendChild(tr);
+            });
+        }
+
+        /**
+         * Rellena el datalist de "Actualizar Producto" con los productos del mapa.
+         */
+        function renderProductDatalist() {
+            productListSuggestions.innerHTML = ''; // Limpiar datalist
+
+            if (productsMap.size === 0) {
+                updateProductInput.placeholder = "Añade un producto primero";
+                return;
+            }
+
+            updateProductInput.placeholder = "Escribe para buscar...";
+            
+            // Ordenar productos por nombre
+            const sortedProducts = [...productsMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+
+            sortedProducts.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.name; // El valor visible es el nombre
+                option.dataset.id = product.id; // Guardamos el ID en un data attribute
+                productListSuggestions.appendChild(option);
+            });
+        }
+
+        /**
+         * Guarda un nuevo producto en Firestore.
+         */
+        async function saveProduct() {
+            if (!userId) return;
+
+            const name = productNameInput.value.trim();
+            const category = productCategorySelect.value;
+            const cost = parseFloat(productCostInput.value);
+
+            if (!name || !category || isNaN(cost)) {
+                showToast("Por favor, completa todos los campos correctamente.", true);
+                return;
+            }
+
+            const newProduct = { name, category, cost };
+            const productsCollRef = collection(db, "artifacts", appId, "users", userId, "products");
+
+            try {
+                await addDoc(productsCollRef, newProduct);
+                console.log("Producto guardado:", newProduct);
+                showToast("Producto guardado exitosamente.");
+                saveProductForm.reset(); // Limpiar formulario
+            } catch (error) {
+                console.error("Error al guardar producto:", error);
+                showToast("Error al guardar el producto.", true);
+            }
+        }
+        
+        /**
+         * Elimina un producto de Firestore.
+         */
+        async function deleteProduct(e) {
+            if (!e.target.classList.contains('delete-btn')) return;
+            if (!userId) return;
+
+            const productId = e.target.dataset.id;
+            
+            // Usar un modal personalizado en lugar de confirm()
+            // Por simplicidad en este ejemplo, eliminamos directamente.
+            // En una app real, aquí iría un modal de confirmación.
+            console.log(`Intentando eliminar producto: ${productId}`);
+
+            const productDocRef = doc(db, "artifacts", appId, "users", userId, "products", productId);
+            try {
+                await deleteDoc(productDocRef);
+                showToast("Producto eliminado.");
+            } catch (error) {
+                console.error("Error al eliminar producto:", error);
+                showToast("Error al eliminar el producto.", true);
+            }
+        }
+
+        /**
+         * Calcula el nuevo precio de venta y actualiza el costo en Firestore.
+         */
+        async function calculateAndUpdatePrice(e) {
+            e.preventDefault();
+            if (!userId) return;
+
+            const selectedName = updateProductInput.value; // Obtener nombre del input
+            const newCost = parseFloat(updateCostInput.value);
+
+            // Buscar el productId desde el datalist
+            let productId = null;
+            const options = productListSuggestions.options;
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].value === selectedName) {
+                    productId = options[i].dataset.id;
+                    break;
+                }
+            }
+
+            // Validar que se encontró un producto
+            if (!productId) {
+                showToast("Producto no encontrado. Selecciona un producto válido de la lista.", true);
+                newPriceResult.innerHTML = '';
+                newPriceResult.classList.remove('highlight-result', 'bg-red-100', 'bg-blue-100');
+                return;
+            }
+
+            // Validar costo
+            if (isNaN(newCost) || newCost < 0) {
+                showToast("Introduce un costo válido.", true);
+                newPriceResult.innerHTML = '';
+                newPriceResult.classList.remove('highlight-result', 'bg-red-100', 'bg-blue-100');
+                return;
+            }
+
+            const product = productsMap.get(productId);
+            if (!product) {
+                showToast("Producto no encontrado en el mapa de datos.", true);
+                return;
+            }
+
+            // El bloque duplicado de 'product' ha sido eliminado.
+            
+            const markupPercent = currentMarkups[product.category] || 0;
+            const newSellingPrice = calculateSellingPrice(newCost, markupPercent);
+            
+            // Mostrar resultado
+            newPriceResult.innerHTML = `
+                <span class="block text-sm text-gray-700">Nuevo Precio de Venta para:</span>
+                <span class="block text-lg font-bold text-gray-900">${product.name}</span>
+                <span class="block text-3xl font-extrabold text-blue-700 mt-2">${formatCurrency(newSellingPrice)}</span>
+                <span class="block text-sm text-gray-600 mt-1">(Costo: ${formatCurrency(newCost)} + ${markupPercent}% Aumento)</span>
+            `;
+            newPriceResult.classList.remove('bg-red-100');
+            newPriceResult.classList.add('highlight-result');
+            
+            // Ocultar el highlight después de la animación
+            setTimeout(() => newPriceResult.classList.remove('highlight-result'), 300);
+
+            // Actualizar el costo en Firestore
+            const productDocRef = doc(db, "artifacts", appId, "users", userId, "products", productId);
+            try {
+                await updateDoc(productDocRef, { cost: newCost });
+                console.log(`Costo actualizado para ${product.name} a ${newCost}`);
+                showToast(`Costo de "${product.name}" actualizado.`);
+                // Limpiar inputs del formulario de actualización
+                updateCostInput.value = '';
+                updateProductInput.value = ''; // Limpiar input de texto
+            } catch (error) {
+                console.error("Error al actualizar costo:", error);
+                showToast("Error al actualizar el costo en la base de datos.", true);
+            }
+        }
+
+        // --- FUNCIONES AUXILIARES ---
+
+        function calculateSellingPrice(cost, markupPercent) {
+            return cost * (1 + markupPercent / 100);
+        }
+
+        function formatCurrency(value) {
+            return value.toLocaleString('es-VE', { style: 'currency', currency: 'VES' }); // Ajusta a tu moneda local si es necesario (Ej: 'USD')
+        }
+        
+        function capitalize(s) {
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+        
+        function getCategoryClass(category) {
+            switch(category) {
+                case 'viveres': return 'bg-green-100 text-green-800';
+                case 'higiene': return 'bg-blue-100 text-blue-800';
+                case 'dulceria': return 'bg-pink-100 text-pink-800';
+                case 'papeleria': return 'bg-purple-100 text-purple-800';
+                case 'limpieza': return 'bg-yellow-100 text-yellow-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+        
+        function enableForms(enabled) {
+            const forms = [markupForm, saveProductForm, updatePriceForm];
+            forms.forEach(form => {
+                const inputs = form.querySelectorAll('input, select, button');
+                inputs.forEach(input => input.disabled = !enabled);
+            });
+        }
+        
+        function showToast(message, isError = false) {
+            // Crea un toast simple
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.className = `fixed bottom-4 right-4 p-4 rounded-md shadow-lg text-white font-medium ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+            document.body.appendChild(toast);
+            
+            // Elimina el toast después de 3 segundos
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        // --- EVENT LISTENERS ---
+        saveMarkupsBtn.addEventListener('click', saveMarkups);
+        saveProductForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveProduct();
+        });
+        updatePriceForm.addEventListener('submit', calculateAndUpdatePrice);
+        productListTableBody.addEventListener('click', deleteProduct);
+        
+    </script>
+</body>
+</html>
